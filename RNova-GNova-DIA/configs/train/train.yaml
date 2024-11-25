@@ -1,0 +1,7 @@
+lr: 2e-6
+weight_decay: 0.01
+total_epoch: 4000 # 20
+warmup_steps: 6000 # 6000
+detect_period: 400
+eval_period: 4000
+gradient_accumulation_step: 1

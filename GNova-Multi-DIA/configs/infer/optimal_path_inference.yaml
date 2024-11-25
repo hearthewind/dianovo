@@ -1,0 +1,5 @@
+beam_size: 20
+optimal_path_file: 'prediction/optimal_path/oc_beam20_multiply.csv'
+test_spec_header_filename: '1.csv'
+dataset_dir: '/home/m/data2/GNova-Peak-DIA-Data-nov20/oc/unique/'
+device: 0

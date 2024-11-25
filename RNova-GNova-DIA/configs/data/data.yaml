@@ -1,0 +1,14 @@
+peptide_max_len: 32
+ms2_max_peak_count: 100000
+ms1_threshold: 0.02
+ms2_threshold: 0.02
+precursor_max_charge: 4
+product_max_charge: 2
+n_term_ion:
+  - a
+  - b
+  #- c
+c_term_ion:
+  #- x
+  - y
+  #- z

@@ -1,0 +1,5 @@
+output_path: 'prediction/pretrain/pain19777_03179/'
+output_filename: 'pain19777_03179.csv'
+test_spec_header_filename: 'combined.csv'
+dataset_dir: '/home/m/data2/RNova-DIA-Multi-Data/pain19777_03179_train_valid/train/'
+device: 0

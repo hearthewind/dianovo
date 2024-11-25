@@ -1,0 +1,4 @@
+peptide_max_len: 32
+ms1_threshold: 0.02
+ms2_threshold: 0.02
+precursor_max_charge: 4

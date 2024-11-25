@@ -1,0 +1,5 @@
+beam_size: 20
+output_file: 'prediction/sequence_generation/oc_beam20_sum.csv'
+test_spec_header_filename: '1.csv'
+dataset_dir: '/home/m/data2/GNova-Peak-DIA-Data-nov20/oc/unique/'
+device: 0

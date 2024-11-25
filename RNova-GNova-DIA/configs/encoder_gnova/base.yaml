@@ -1,0 +1,5 @@
+hidden_size: 2048
+d_relation: 512
+num_layers: 6
+num_heads: 8
+dropout_rate: 0

@@ -1,0 +1,24 @@
+defaults:
+  - encoder: light
+  - decoder: light
+  - train: train
+  - infer: optimal_path_inference
+  - sample: 4090_24g_light
+  - data: data
+  - _self_
+
+mode: train
+task: pretrain
+train_spec_header_path: None
+eval_spec_header_path: None
+train_dataset_dir: None
+eval_dataset_dir: None
+serialized_model_path: None
+device: gpu
+server: bsi
+
+wandb:
+  entity: winston-zheng-m
+  project: GNova-Multi-DIA
+  name: PeakClass-debug
+

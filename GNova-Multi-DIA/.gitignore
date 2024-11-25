@@ -1,0 +1,14 @@
+/.idea
+__pycache__
+*.so
+*.c
+/wandb
+/save/*
+/prediction/*
+/output
+build
+candidate_mass
+*.npy
+/outputs
+nohup.out
+
