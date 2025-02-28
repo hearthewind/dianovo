@@ -4,15 +4,14 @@ This is the codebase for the paper "Disentangling the Complex Multiplexed DIA Sp
 
 Under the ``xcorr_theory`` folder, you can find the code for the theoretical analysis of peptide recall under different experimental conditions. Under folder ``pretrain_model`` and ``main_model`` you can find the pretrain and downstream models respectively.
 
-
-For training details, please refer to the README in the corresponding subfolder.
+For training and data generation details, please refer to the README in the corresponding subfolder.
 
 # Data Directory
 
 Here you can find sample data to try, as well as trained weights.
 https://www.dropbox.com/scl/fo/ij9vjz3v9lig0vpqwmvh5/AEGAxp-NpXxKCqdDnSrKkRs?rlkey=6rdmb74ycgq2zxbrgl33fkq6a&st=jnxbe3bx&dl=0
 
-# Software and Hardware Requirements
+# Software and hardware requirements
 
 Please install the Python environment by 
 
