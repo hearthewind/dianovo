@@ -73,7 +73,7 @@ def create_interpolated_ms1(peptide: dict, ms1_df: pd.DataFrame, ms2_df: pd.Data
 
     if scan_left_count < scan_size_half:
         for _ in range(scan_size_half - scan_left_count):
-            for _ in binned_ms1:
+            for i, _ in enumerate(binned_ms1):
                 selected_xgrams[i].append(0.0)
             selected_feature_dicts.append({})
 
@@ -85,7 +85,7 @@ def create_interpolated_ms1(peptide: dict, ms1_df: pd.DataFrame, ms2_df: pd.Data
 
     if scan_right_count < scan_size_half:
         for _ in range(scan_size_half - scan_right_count):
-            for _ in binned_ms1:
+            for i, _ in enumerate(binned_ms1):
                 selected_xgrams[i].append(0.0)
             selected_feature_dicts.append({})
 

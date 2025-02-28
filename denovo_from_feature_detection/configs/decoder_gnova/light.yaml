@@ -1,0 +1,5 @@
+hidden_size: 1024
+d_relation: 512
+num_layers: 4
+num_heads: 4
+dropout_rate: 0

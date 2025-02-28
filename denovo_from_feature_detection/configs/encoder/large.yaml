@@ -1,0 +1,3 @@
+hidden_size: 4096
+num_heads: 64
+num_layers: 24

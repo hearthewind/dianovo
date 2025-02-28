@@ -4,7 +4,7 @@ from torch import nn
 from rnova.model.rnova_decoder import RNovaDecoder
 from rnova.model.rnova_encoder import RNovaEncoder
 from rnova.model_gnova import GNova
-from utils.cofragment_peptide_processing import label_types
+from utils.cofragment_peptide_processing_cy import label_types
 from utils.data.BasicClass import Residual_seq
 
 

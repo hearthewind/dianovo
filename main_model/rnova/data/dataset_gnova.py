@@ -6,7 +6,7 @@ import torch
 import pickle
 from torch.utils.data import Dataset
 
-from utils.cofragment_peptide_processing import ion_types, label_dict
+from utils.cofragment_peptide_processing_cy import ion_types, label_dict
 from utils.data.BasicClass import Residual_seq, Ion
 from utils.data.theo_peak_information import get_theoretical_peaks
 

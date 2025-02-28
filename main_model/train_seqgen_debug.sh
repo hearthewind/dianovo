@@ -1,6 +1,6 @@
 CUDA_VISIBLE_DEVICES=0 CUDA_LAUNCH_BLOCKING=1 \
 python -u main.py mode=train device=gpu task=sequence_generation serialized_model_path=save/ckpt \
-gnova_file_name=GNova-Astral_pretrain-debug \
+gnova_file_name=GNova-Astral_pretrain-453 \
 train_spec_header_path=~/data/Dropbox/shared/dianovo_data/processed_data_46386/02052023_Yeast_KO_3Th_2p5ms_KO1_rep01_20230503212731_1.csv \
 eval_spec_header_path=~/data/Dropbox/shared/dianovo_data/processed_data_46386/02052023_Yeast_KO_3Th_2p5ms_KO1_rep01_20230503212731_1.csv \
 train_dataset_dir=~/data/Dropbox/shared/dianovo_data/processed_data_46386/ \

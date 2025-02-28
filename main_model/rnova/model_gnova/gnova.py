@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 
-from utils.cofragment_peptide_processing import label_types
+from utils.cofragment_peptide_processing_cy import label_types
 from utils.data.BasicClass import Residual_seq
 from .gnova_decoder import GNovaDecoder
 from .gnova_encoder import GNovaEncoder
