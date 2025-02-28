@@ -4,7 +4,7 @@ import sys
 
 from utils.cofragment_peptide_processing import process_one_peptide_and_cofragment
 from utils.data.processing_ms1 import create_interpolated_ms1
-from utils.data.processing_ms2 import bin_one_peptide
+from utils.data.processing_ms2_cy import bin_one_peptide
 
 sys.path.append('../')
 

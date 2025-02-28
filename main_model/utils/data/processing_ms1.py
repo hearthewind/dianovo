@@ -4,10 +4,11 @@ import numpy as np
 import pandas as pd
 
 import sys
+sys.path.append('../../')
 
 from utils.data.processing_utils import find_best_scan_index, bin_one_spectrum, feature_gen
 
-sys.path.append('../../')
+
 from utils.data.configs import mz_max, num_bins
 from utils.data.peptide import get_ms1_from_precursor, get_ms2_from_precursor, filter_ms1_precursor_window
 

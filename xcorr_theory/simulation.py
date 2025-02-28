@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from configs import main_iontypes, sub_iontypes, mz_min, mz_max, noise_intensity, amino_acids, bin_width, \
+from configs import main_iontypes, sub_iontypes, mz_min, mz_max, amino_acids, bin_width, \
     offset_window, sub_weight
 from data.BasicClass import Residual_seq
 from data.theo_peak_information import get_theoretical_peaks
@@ -36,11 +36,11 @@ def get_signal_peaks_per_peptide(peptide_seq, precursor_charge):
 
     return list(set(ret))
 
-def generate_random_spectrum(peptide_seq, precursor_charge, signal, noise):
+def generate_random_spectrum(peptide_seq, precursor_charge, signal, noise, noise_int):
     signal_peaks = get_signal_peaks_per_peptide(peptide_seq, precursor_charge)
     # signal_portion = random.sample(signal_peaks, k=signal) #TODO
     signal_portion = random.choices(signal_peaks, k=signal)
-    noise_portion = [(random.uniform(mz_min, mz_max - mz_min), noise_intensity) for _ in range(noise)]
+    noise_portion = [(random.uniform(mz_min, mz_max - mz_min), noise_int) for _ in range(noise)]
 
     spectrum = signal_portion + noise_portion
 
@@ -65,8 +65,8 @@ def xcorr_penalty(binned_spectrum):
 
     return ret
 
-def generate_O(peptide_seq, precursor_charge, signal, noise):
-    exp_spectrum = generate_random_spectrum(peptide_seq, precursor_charge, signal, noise)
+def generate_O(peptide_seq, precursor_charge, signal, noise, noise_int):
+    exp_spectrum = generate_random_spectrum(peptide_seq, precursor_charge, signal, noise, noise_int)
     binned_spectrum = bin_spectrum(exp_spectrum)
     O = xcorr_penalty(binned_spectrum)
     return O
@@ -101,10 +101,10 @@ def compute_xcorr_ori(peptide_seq, precursor_charge, O):
     theo_spectrum = generate_theoretical_spectrum(peptide_seq, precursor_charge)
     return np.sum(theo_spectrum * O)
 
-def run_one_peptide(l: int, signal: int, noise: int):
+def run_one_peptide(l: int, signal: int, noise: int, noise_int: float):
     try:
         peptide_seq, precursor_charge = generate_random_peptide(l)
-        O = generate_O(peptide_seq, precursor_charge, signal, noise)
+        O = generate_O(peptide_seq, precursor_charge, signal, noise, noise_int)
         xcorr_score, peptides_with_higher_score, total_number_of_peptides = process_spectra(O, peptide_seq, precursor_charge)
     except Exception as e:
         return None

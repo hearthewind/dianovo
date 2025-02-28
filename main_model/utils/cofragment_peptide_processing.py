@@ -1,14 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from utils.data.BasicClass import Residual_seq
 from utils.data.peptide import get_ms2_from_precursor
-from utils.data.theo_peak_information import get_theoretical_peaks
+from utils.cofragment_peptide_processing_cy import label_ms2_one_peptide, label_dict
 
-ion_types = ['1a','1b','2a','2b','1a-NH3','1a-H2O','1b-NH3','1b-H2O'] + ['1y','1y-NH3','1y-H2O','2y'] # total 12 ions
 
-label_types = ['noise'] + ion_types + ['ms1']
-label_dict = dict(zip(label_types, np.arange(len(label_types))))
 
 mass_threshold = 0.02
 
@@ -47,44 +43,44 @@ def find_all_cofragment(peptide: dict, diann_result: list, ms2_df: pd.DataFrame)
 
     return ret
 
-def label_ms2_one_peptide(peptide: dict, ms2_mzs: np.array):
-    mod_seq = peptide['mod_sequence']
-    precursor_charge = peptide['charge']
-
-    if precursor_charge <= 2:
-        chosen_ion_types = [x for x in ion_types if x.startswith('1')]
-    else:
-        chosen_ion_types = ion_types
-
-    # precursor_mass should be theoretical
-    precursor_mass_theo = Residual_seq(mod_seq).mass
-
-    theo_fragments = []
-    for location in range(0, len(mod_seq) - 1):
-        theoretical_peaks = get_theoretical_peaks(mod_seq, precursor_mass_theo, location)
-        for ion in chosen_ion_types:
-            mz = theoretical_peaks[ion]
-            if ion == '1a' and mz > 300.0:
-                continue
-            elif ion == '2y' and mz < 400.0:
-                continue
-
-            theo_fragments.append((mz, ion))
-
-    labels = []
-    for mz in ms2_mzs:
-        fragment = False
-        for theo_mz, ion in theo_fragments:
-            if mz - mass_threshold <= theo_mz <= mz + mass_threshold:
-                labels.append(ion)
-                fragment = True
-                break
-        if not fragment:
-            labels.append('noise')
-
-    ret = [label_dict[label] for label in labels]
-    ret = np.array(ret)
-    return ret
+# def label_ms2_one_peptide(peptide: dict, ms2_mzs: np.array):
+#     mod_seq = peptide['mod_sequence']
+#     precursor_charge = peptide['charge']
+#
+#     if precursor_charge <= 2:
+#         chosen_ion_types = [x for x in ion_types if x.startswith('1')]
+#     else:
+#         chosen_ion_types = ion_types
+#
+#     # precursor_mass should be theoretical
+#     precursor_mass_theo = Residual_seq(mod_seq).mass
+#
+#     theo_fragments = []
+#     for location in range(0, len(mod_seq) - 1):
+#         theoretical_peaks = get_theoretical_peaks(mod_seq, precursor_mass_theo, location)
+#         for ion in chosen_ion_types:
+#             mz = theoretical_peaks[ion]
+#             if ion == '1a' and mz > 300.0:
+#                 continue
+#             elif ion == '2y' and mz < 400.0:
+#                 continue
+#
+#             theo_fragments.append((mz, ion))
+#
+#     labels = []
+#     for mz in ms2_mzs:
+#         fragment = False
+#         for theo_mz, ion in theo_fragments:
+#             if mz - mass_threshold <= theo_mz <= mz + mass_threshold:
+#                 labels.append(ion)
+#                 fragment = True
+#                 break
+#         if not fragment:
+#             labels.append('noise')
+#
+#     ret = [label_dict[label] for label in labels]
+#     ret = np.array(ret)
+#     return ret
 
 def label_ms1_one_peptide(peptide: dict, ms1_mzs: np.array):
     precursor_mz = peptide['precursor_mz']

@@ -2,19 +2,19 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from simulation import run_one_peptide
-from configs import sub_weight, noise_intensity, bin_width
+from configs import sub_weight, bin_width
 import numpy as np
 
 rounds = 500
 n_jobs = 32
 
-def run_one_param(l: int, signal: int, noise: int):
+def run_one_param(l: int, signal: int, noise: int, noise_int: float):
     print('---- For one parameter ----')
     print('l', l, 'signal', signal, 'noise', noise)
-    print('sub_weight', sub_weight, 'noise_intensity', noise_intensity, 'bin_width', bin_width)
+    print('sub_weight', sub_weight, 'noise_intensity', noise_int, 'bin_width', bin_width)
 
     parallel = Parallel(n_jobs=n_jobs, return_as="generator_unordered")
-    simulation_generator = parallel(delayed(run_one_peptide)(l=l, signal=signal, noise=noise) for _ in range(rounds))
+    simulation_generator = parallel(delayed(run_one_peptide)(l=l, signal=signal, noise=noise, noise_int=noise_int) for _ in range(rounds))
 
     sim_results = []
     for sim_dict in tqdm(simulation_generator, total=rounds):

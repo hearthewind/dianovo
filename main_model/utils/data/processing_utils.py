@@ -4,7 +4,7 @@ import pandas as pd
 import sys
 sys.path.append('../../')
 from utils.data.configs import mz_max, ToleranceType, bin_size, num_bins
-from utils.data.peak_feature_generator import PeakFeatureGeneration
+from utils.data.peak_feature_generator_cy import PeakFeatureGeneration
 
 
 def within_tolerance(theoretical_peak: float,
@@ -41,7 +41,7 @@ def bin_one_spectrum(spectrum: pd.Series):
 feature_gen = PeakFeatureGeneration()
 
 
-def find_best_scan_index(related_ms2: pd.DataFrame, rt_peak):
+def find_best_scan_index(related_ms2: pd.DataFrame, rt_peak: float) -> int:
     best_scan_index = -1
     best_rt_dist = float('inf')
     for scan_index, (_, scan) in enumerate(related_ms2.iterrows()):
