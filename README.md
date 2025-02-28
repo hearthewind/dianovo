@@ -56,7 +56,7 @@ infer.dataset_dir=[test msgp file dir] \
 infer.test_spec_header_filename=[test spec header filename]
 ```
 
-The model will generate predicted result, as well as report amino acid and peptide recall afterwards after the de novo is done.
+The model will generate predicted result, as well as report amino acid and peptide recall after the de novo is done.
 
 The sequence generation decoding will generate final de novo result in a .csv files, with the following columns
 ```
