@@ -6,7 +6,7 @@ Under the ``xcorr_theory`` folder, you can find the code for the theoretical ana
 
 For training and data generation details, please refer to the README in the corresponding subfolder.
 
-# Data Directory
+# Data directory
 
 Here you can find sample data to try, as well as trained weights.
 https://www.dropbox.com/scl/fo/ij9vjz3v9lig0vpqwmvh5/AEGAxp-NpXxKCqdDnSrKkRs?rlkey=6rdmb74ycgq2zxbrgl33fkq6a&st=jnxbe3bx&dl=0
