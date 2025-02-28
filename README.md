@@ -13,9 +13,9 @@ https://www.dropbox.com/scl/fo/ij9vjz3v9lig0vpqwmvh5/AEGAxp-NpXxKCqdDnSrKkRs?rlk
 
 # Software and hardware requirements
 
-Please install the Python environment by 
+Please install the Python environment using conda by 
 
-``pip install -r gnova_requirements.txt``
+``conda env create -f environment.yml``
 
 which should take less than 10 minutes, the program is tested on Ubuntu 24.04 with Python 3.9.
 
