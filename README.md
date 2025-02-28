@@ -5,7 +5,7 @@ This is the codebase for the paper "Disentangling the Complex Multiplexed DIA Sp
 Under the ``xcorr_theory`` folder, you can find the code for the theoretical analysis of peptide recall under different experimental conditions. Under folder ``pretrain_model`` and ``main_model`` you can find the pretrain and downstream models respectively.
 Under the ``denovo_from_feature_detection`` folder, we provide the code to run de novo sequencing directly from feature detection data and mzml spectrum files.
 
-For training and data generation details, please refer to the README in the corresponding subfolder.
+For training, data generation, as well as denovo from feature detection result, please refer to the README in the corresponding subfolder.
 
 # Data directory
 
