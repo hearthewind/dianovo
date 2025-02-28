@@ -59,4 +59,9 @@ infer.test_spec_header_filename=[test spec header filename]
 
 The model will generate predicted result, as well as report amino acid and peptide recall afterwards after the de novo is done.
 
+The sequence generation decoding will generate final de novo result in a .csv files, with the following columns
+```
+'graph_idx, 'pred_seq', 'pred_prob', 'pred_path', 'label_seq'
+```
+
 It takes around 1.5 seconds for one peptide to go through either optimal path decoding or sequence generation decoding, but you can parallelize peptides over multiple GPUs.
