@@ -16,7 +16,7 @@ sh parallel_preprocessing.sh [num_worker] \
 [output dir]
 ```
 
-It takes around 0.8 seconds to process a single peptide, but this process is parallelized.
+It takes around 1.6 seconds to process a single peptide, but this process is parallelized.
 
 # How to perform de novo sequencing
 
