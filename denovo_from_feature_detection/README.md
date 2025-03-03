@@ -22,11 +22,11 @@ It takes around 1.6 seconds to process a single peptide, but this process is par
 
 Please refer to 
 ``
-./test_op_386on453.sh
+./denovo_op_386on453.sh
 ``
 and
 ``
-./test_sg_386on453.sh
+./denovo_sg_386on453.sh
 ``
 to perform de novo sequencing on the any dataset directly from feature detection result,
 
