@@ -345,7 +345,7 @@ class OptimalPathInference:
             ######
             # Filter large peptides
             total_peak_num = spec_head['Peak Number']
-            if total_peak_num > 40_000:
+            if total_peak_num > 80_000:
                 continue
             ######
 

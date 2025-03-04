@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from rnova.data.dataset_gnova import GenovaDataset
 from utils.data.BasicClass import Residual_seq, Ion, Composition
 
-astral_filtering = True
+astral_filtering = False
 
 class RNovaDataset(Dataset):
     def __init__(self, cfg, spec_header, dataset_dir_path):

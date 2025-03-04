@@ -48,7 +48,7 @@ def sequence_generation_inference(cfg: DictConfig, spec_header, test_dl, model, 
         spec_head = spec_header.loc[idx[0]]
 
         total_peak_num = spec_head['Peak Number']
-        if total_peak_num > 40_000:
+        if total_peak_num > 80_000:
             continue
         ######
 
@@ -74,7 +74,7 @@ def sequence_generation_inference(cfg: DictConfig, spec_header, test_dl, model, 
 
         #####
         # Limit the total number of peptide
-        if peptide_predict_num >= 8_000:
+        if peptide_predict_num >= 10_000:
             break
         #####
 
