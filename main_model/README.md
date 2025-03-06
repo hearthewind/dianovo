@@ -49,7 +49,7 @@ sample=4090_24g_light wandb.project=RNova-Astral wandb.name=[model name]
 
 # How to run on test data
 
-Please make sure that ``knapsack.npy`` is stored under ``[project_dir]/main_model/save/knapsack/``, and model checkpoints are saved under ``[project_dir]/main_model/save/ckpt/``.
+Please make sure that ``knapsack.npy`` is stored under ``[project_dir]/main_model/save/knapsack/``, and model checkpoints are stored under ``[project_dir]/main_model/save/ckpt/``.
 
 Please refer to 
 ``
