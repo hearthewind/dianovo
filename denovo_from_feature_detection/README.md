@@ -20,6 +20,8 @@ It takes around 1.6 seconds to process a single peptide, but this process is par
 
 # How to perform de novo sequencing
 
+Please make sure that ``knapsack.npy`` is stored under ``[project_dir]/debovo_from_feature_detection/save/knapsack/``, and model checkpoints are saved under ``[project_dir]/denovo_from_feature_detection/save/ckpt/``.
+
 Please refer to 
 ``
 ./denovo_op_386on453.sh
