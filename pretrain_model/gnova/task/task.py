@@ -10,6 +10,7 @@ from gnova.loss_func.multitask_loss import get_multitask_loss, get_multitask_los
 from gnova.optimizer import Lion
 from gnova.optimizer.warmup_scheduler import get_lr_scheduler
 import torch.distributed as dist
+from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from torch.cuda.amp import autocast, GradScaler
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -201,7 +202,7 @@ class Task:
                         with autocast(dtype=float16_type):
                             iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
+                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
                             iontype_label_flatten = iontype_label.flatten().long()
 
                             iontype_loss = self.iontype_train_loss_fn(iontype_pred_flatten, iontype_label_flatten)
@@ -213,7 +214,7 @@ class Task:
                     elif self.cfg.device == 'cpu':
                         iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
+                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
                         iontype_label_flatten = iontype_label.flatten().long()
 
                         iontype_loss = self.iontype_train_loss_fn(iontype_pred_flatten, iontype_label_flatten)
@@ -258,6 +259,10 @@ class Task:
                     if self.cfg.device == 'gpu':
                         self.scaler.scale(loss).backward()
                         if (i + 1) % self.cfg.train.gradient_accumulation_step == 0:
+                            # 1. Un‐scale the gradients in the optimizer’s parameter groups
+                            self.scaler.unscale_(self.optimizer)
+                            # 2. Clip them (choose max_norm to taste, often 1.0)
+                            clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                             self.scaler.step(self.optimizer)
                             self.scaler.update()
                             self.optimizer.zero_grad(set_to_none=True)
@@ -504,7 +509,7 @@ class Task:
                         with autocast(dtype=float16_type):
                             iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
+                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
                             iontype_label_flatten = iontype_label.flatten().long()
 
                             iontype_loss = self.iontype_eval_loss_fn(iontype_pred_flatten, iontype_label_flatten)
@@ -512,7 +517,7 @@ class Task:
                     elif self.cfg.device == 'cpu':
                         iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
+                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
                         iontype_label_flatten = iontype_label.flatten().long()
 
                         iontype_loss = self.iontype_eval_loss_fn(iontype_pred_flatten, iontype_label_flatten)

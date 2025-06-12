@@ -438,8 +438,8 @@ class OptimalPathInference:
 
                 #####
                 # Limit the total number of peptide
-                if peptide_predict_num >= 10_000:
-                    break
+                # if peptide_predict_num >= 10_000:
+                #     break
                 #####
 
         # Print the final evaluation

@@ -2,8 +2,10 @@ import math
 from einops import rearrange
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from flash_attn import flash_attn_varlen_func as attn_unpadded_func # This is the equivalent for flash attention 2
+from torch.nn.attention import sdpa_kernel, SDPBackend
 
 from torch.utils.checkpoint import checkpoint
 
@@ -28,12 +30,13 @@ class FlashQKV(nn.Module):
                            (default: 0.0)
     """
 
-    def __init__(self, softmax_scale=None, attention_dropout=0.0, causal=False):
+    def __init__(self, softmax_scale=None, attention_dropout=0.0, causal=False, device='gpu'):
         super().__init__()
         assert attn_unpadded_func is not None, "FlashAttention is not installed"
         self.softmax_scale = softmax_scale
         self.drop = nn.Dropout(attention_dropout)
         self.causal = causal
+        self.device = device
 
     def forward(self, q, k, v):
         """Implements the multihead softmax attention.
@@ -41,33 +44,47 @@ class FlashQKV(nn.Module):
         ---------
             q, k, v: The tensor containing the query, key, and value.
                 q has shape (B, S, Hq, D).
-                q, v has shape (B, S, Hk, D).
+                k, v has shape (B, S, Hk, D).
 
                 Hq = c * Hk for some c
         Returns:
         --------
             out:  (B, S, Hq, D).
         """
-        assert q.dtype in [torch.float16, torch.bfloat16]
-        assert q.is_cuda
+        # assert q.dtype in [torch.float16, torch.bfloat16]
+        # assert q.is_cuda #TODO(m) no need for these check anymore
 
         batch_size, seqlen_q = q.shape[0], q.shape[1]
         seqlen_k = k.shape[1]
 
-        q, k, v = [rearrange(x, 'b s ... -> (b s) ...') for x in [q, k, v]]
-        cu_seqlens_q = torch.arange(0, (batch_size + 1) * seqlen_q, step=seqlen_q, dtype=torch.int32, device = q.device)
-        cu_seqlens_k = torch.arange(0, (batch_size + 1) * seqlen_k, step=seqlen_k, dtype=torch.int32, device=k.device)
+        if self.device == 'gpu':
+            q, k, v = [rearrange(x, 'b s ... -> (b s) ...') for x in [q, k, v]]
+            cu_seqlens_q = torch.arange(0, (batch_size + 1) * seqlen_q, step=seqlen_q, dtype=torch.int32, device = q.device)
+            cu_seqlens_k = torch.arange(0, (batch_size + 1) * seqlen_k, step=seqlen_k, dtype=torch.int32, device=k.device)
 
-        post_v = attn_unpadded_func(
-            q, k, v,
-            cu_seqlens_q, cu_seqlens_k,
-            seqlen_q, seqlen_k,
-            self.drop.p if self.training else 0.0,
-            softmax_scale=self.softmax_scale,
-            causal=self.causal,
-        )
+            post_v = attn_unpadded_func(
+                q, k, v,
+                cu_seqlens_q, cu_seqlens_k,
+                seqlen_q, seqlen_k,
+                self.drop.p if self.training else 0.0,
+                softmax_scale=self.softmax_scale,
+                causal=self.causal,
+            )
 
-        post_v = rearrange(post_v, '(b s) ... -> b s ...', b=batch_size)
+            post_v = rearrange(post_v, '(b s) ... -> b s ...', b=batch_size)
+        elif self.device == 'cpu':
+            q = q.permute(0, 2, 1, 3)
+            k = k.permute(0, 2, 1, 3)
+            v = v.permute(0, 2, 1, 3)
+            with sdpa_kernel(backends=[SDPBackend.MATH]):
+                post_v = F.scaled_dot_product_attention(q, k, v,
+                                                    attn_mask=None,
+                                                    dropout_p=self.drop.p if self.training else 0.0,
+                                                    is_causal=self.causal,
+                                                    scale=self.softmax_scale,
+                                                    enable_gqa=True)
+            post_v = post_v.permute(0, 2, 1, 3)
+
         return post_v
 
 class MultiHeadRelation(nn.Module):
@@ -77,7 +94,8 @@ class MultiHeadRelation(nn.Module):
                  d_relation: int,
                  alpha: float,
                  beta: float,
-                 dropout_rate: float):
+                 dropout_rate: float,
+                 device='gpu'):
         super().__init__()
         self.d_relation = d_relation
         self.num_kv_heads = num_heads
@@ -98,7 +116,7 @@ class MultiHeadRelation(nn.Module):
         nn.init.xavier_normal_(self.linear_v.weight, gain=beta)
         nn.init.xavier_normal_(self.output_layer.weight, gain=beta)
 
-        self.self_attention = FlashQKV(softmax_scale=1.0/math.sqrt(self.head_dim), attention_dropout=dropout_rate)
+        self.self_attention = FlashQKV(softmax_scale=1.0/math.sqrt(self.head_dim), attention_dropout=dropout_rate, device=device)
 
     def forward(self, peak_features, peak_mzs_embed, neg_peak_mzs_embed):
         peak_num = peak_features.size(1)
@@ -158,10 +176,11 @@ class GNovaEncoderLayer(nn.Module):
                  d_relation: int,
                  alpha: float, 
                  beta: float, 
-                 dropout_rate: float):
+                 dropout_rate: float,
+                 device='gpu'):
 
         super().__init__()
-        self.relation = MultiHeadRelation(hidden_size, num_heads, d_relation, alpha, beta, dropout_rate)
+        self.relation = MultiHeadRelation(hidden_size, num_heads, d_relation, alpha, beta, dropout_rate, device)
         self.ffn = FFNGLU(hidden_size, alpha, beta, dropout_rate)
 
     def forward(self, peak_features, peak_mzs_embed, neg_peak_mzs_embed):

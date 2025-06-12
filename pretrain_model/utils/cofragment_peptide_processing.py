@@ -10,7 +10,7 @@ ion_types = ['1a','1b','2a','2b','1a-NH3','1a-H2O','1b-NH3','1b-H2O'] + ['1y','1
 label_types = ['noise'] + ion_types + ['ms1']
 label_dict = dict(zip(label_types, np.arange(len(label_types))))
 
-mass_threshold = 0.02
+mass_threshold = 0.01
 
 
 def is_overlap(start1, end1, start2, end2):

@@ -1,6 +1,6 @@
-lr: 5e-5    # should be 2e-6 for optimal path on 4090, 5e-5 for seq gen on 4090
+lr: 5e-6
 warmup_steps: 6000
-total_epoch: 200
+total_epoch: 3
 detect_period: 400
 eval_period: 4000
 gradient_accumulation_step: 1

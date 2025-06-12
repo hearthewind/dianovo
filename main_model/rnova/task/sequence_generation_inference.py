@@ -11,6 +11,8 @@ from tqdm import tqdm
 from .sequence_generation_inference_utils import GenerationInference
 from utils.data.BasicClass import Residual_seq
 
+from rnova.data.sampler import get_total_peak_num #TODO(m) get rid of
+
 
 def sequence_generation_inference(cfg: DictConfig, spec_header, test_dl, model, model_gnova, device):
     graphnovo_dir = get_original_cwd()
@@ -44,15 +46,6 @@ def sequence_generation_inference(cfg: DictConfig, spec_header, test_dl, model, 
 
         if torch.is_tensor(idx): idx = idx.tolist()
 
-        ######
-        # Filter large peptides
-        spec_head = spec_header.loc[idx[0]]
-
-        total_peak_num = spec_head['Peak Number']
-        if total_peak_num > 80_000:
-            continue
-        ######
-
         try:
             seq_label, precursor_moverz, precursor_charge, edge_known_list, path_mass = gen_infer.read_spec_data(idx)
         except KeyError as e:
@@ -81,11 +74,6 @@ def sequence_generation_inference(cfg: DictConfig, spec_header, test_dl, model, 
         aa_label_len_total += aa_label_len
         peptide_predict_num += 1
 
-        #####
-        # Limit the total number of peptide
-        if peptide_predict_num >= 10_000:
-            break
-        #####
 
     print('aa_matched_num_total:', aa_matched_num_total)
     print('aa_predict_len_total: ', aa_predict_len_total)

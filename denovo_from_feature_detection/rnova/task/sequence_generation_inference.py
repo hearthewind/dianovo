@@ -74,8 +74,8 @@ def sequence_generation_inference(cfg: DictConfig, spec_header, test_dl, model, 
 
         #####
         # Limit the total number of peptide
-        if peptide_predict_num >= 10_000:
-            break
+        # if peptide_predict_num >= 10_000:
+        #     break
         #####
 
     print('sequence generation finished')

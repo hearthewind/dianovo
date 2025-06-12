@@ -1,5 +1,6 @@
 import csv
 import os
+from contextlib import nullcontext
 
 import numpy as np
 import torch
@@ -12,8 +13,12 @@ from rnova.task.infer_utils import aa_datablock_dict_generate, input_cuda
 from rnova.task.knapsack import knapsack_search
 from utils.data.BasicClass import Residual_seq, Ion
 
+from rnova.data.sampler import get_total_peak_num #TODO(m) get rid of
+
 float16_type = torch.bfloat16
 multi_mass_label_apr25 = False
+
+
 
 class OptimalPathInference:
     def __init__(self, cfg, device, spec_header, model, model_gnova, test_dl):
@@ -23,6 +28,8 @@ class OptimalPathInference:
         self.model = model
         self.model_gnova = model_gnova
         self.test_dl = test_dl
+
+        self.ctx = autocast(dtype=float16_type) if cfg.device == 'gpu' else nullcontext() #TODO(m) maybe float32
 
         aa_dict = {aa: i for i, aa in enumerate(Residual_seq.output_aadict(), start=3)}
         aa_dict['<pad>'] = 0
@@ -119,7 +126,7 @@ class OptimalPathInference:
             raise ValueError("last_graph_label should contain at least one non-zero entry")
 
     def generate_graph_probability(self, decoder_input, encoder_input, encoder_output):
-        with autocast(dtype=float16_type):
+        with self.ctx:
             graph_probs = decoder_input['graph_probs']
             step_mass = decoder_input['step_mass']
             pos = decoder_input['pos']
@@ -342,20 +349,13 @@ class OptimalPathInference:
             if torch.is_tensor(idx): idx = idx.tolist()
             spec_head = self.spec_header.loc[idx[0]]
 
-            ######
-            # Filter large peptides
-            total_peak_num = spec_head['Peak Number']
-            if total_peak_num > 80_000:
-                continue
-            ######
-
             precursor_charge = int(spec_head['Charge'])
             precursor_mz = float(spec_head['m/z'])
             precursor_mass = Ion.precursorion2mass(precursor_mz, precursor_charge)
 
             with torch.no_grad():
                 encoder_input = input_cuda(encoder_input, self.device)
-                with autocast(dtype=float16_type):
+                with self.ctx:
                     gnova_output_list = [self.model_gnova.encoder(**gnova_encoder_input_list[0])]
                     encoder_output = self.model.encoder(**encoder_input, meta_info_list=meta_info_list, gnova_encoder_output_list=gnova_output_list)
                     # shape is (1, seq_len, hidden_size)
@@ -443,11 +443,10 @@ class OptimalPathInference:
                 writer_path.writerow({'graph_idx': idx[0], 'pred_path': path_pred_print, 'pred_prob': pred_prob, \
                                       'label_path': path_label_print, 'pred_seq': seq_predict})
 
-
                 #####
                 # Limit the total number of peptide
-                if peptide_predict_num >= 10_000:
-                    break
+                # if peptide_predict_num >= 100:
+                #     break
                 #####
 
         # Print the final evaluation

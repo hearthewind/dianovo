@@ -6,7 +6,7 @@ from utils.cofragment_peptide_processing_cy import label_ms2_one_peptide, label_
 
 
 
-mass_threshold = 0.02
+mass_threshold = 0.01
 
 
 def is_overlap(start1, end1, start2, end2):

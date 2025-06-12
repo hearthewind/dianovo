@@ -22,6 +22,7 @@ from rnova.task.optimal_path_inference_classic import OptimalPathInference
 from rnova.task.sequence_generation_inference import sequence_generation_inference
 
 float16_type = torch.bfloat16
+# float16_type = torch.float
 
 class Task:
     def __init__(self, cfg, serialized_model_path):
@@ -43,10 +44,10 @@ class Task:
                     torch.cuda.set_device(self.local_rank)
                 self.distributed = False
         else:
-            if isinstance(cfg.infer.device, int):
-                self.device = torch.device("cuda", cfg.infer.device)
-                torch.cuda.set_device(cfg.infer.device)
-            else:
+            if self.cfg.device == 'gpu':
+                self.device = torch.device("cuda", 0)
+                torch.cuda.set_device(0)
+            elif self.cfg.device == 'cpu':
                 self.device = torch.device("cpu")
             self.distributed = False
 
@@ -108,7 +109,7 @@ class Task:
         self.persistent_file_name = os.path.join(self.serialized_model_path, self.cfg.wandb.project + '_' + self.cfg.wandb.name + '.pt')
         print('checkpoint: ', self.persistent_file_name)
         assert os.path.exists(self.persistent_file_name)
-        if isinstance(self.cfg.infer.device, int):
+        if self.cfg.device == 'gpu':
             checkpoint = torch.load(self.persistent_file_name)
         else:
             checkpoint = torch.load(self.persistent_file_name, map_location='cpu')
@@ -119,7 +120,10 @@ class Task:
         self.model_gnova.eval()
         self.gnova_model_file = os.path.join(self.serialized_model_path, self.cfg.gnova_file_name) + '.pt'
         if os.path.exists(self.gnova_model_file):
-            checkpoint_gnova = torch.load(self.gnova_model_file)
+            if self.cfg.device == 'gpu':
+                checkpoint_gnova = torch.load(self.gnova_model_file)
+            else:
+                checkpoint_gnova = torch.load(self.gnova_model_file, map_location='cpu')
             self.model_gnova.load_state_dict(checkpoint_gnova['model_state_dict'])
             print(f'load gnova model from {self.gnova_model_file}')
         else:
@@ -151,7 +155,7 @@ class Task:
         sampler = RNovaSequentialSampler(self.cfg, test_dataset_dir, test_spec_header)
         collate_fn = RNovaCollator(self.cfg)
         test_dl = DataLoader(ds,batch_sampler=sampler,collate_fn=collate_fn,pin_memory=True)
-        if isinstance(self.cfg.infer.device, int):
+        if self.cfg.device == 'gpu':
             test_dl = DataPrefetcher(test_dl,self.device)
         return test_dl
     

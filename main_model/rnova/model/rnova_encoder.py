@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn.functional import glu
 
 from rnova.data.dataset import astral_filtering
 from rnova.module.dilatedcnn import DilatedConvolutionModule
@@ -52,10 +53,12 @@ class RNovaEncoder(nn.Module):
         self.peak_feature_proj = DilatedConvolutionModule(8, cfg.encoder.hidden_size, 5)
         self.peak_xgram_proj = DilatedConvolutionModule(1, cfg.encoder.hidden_size, 5)
 
-        self.encoder = nn.ModuleList([RNovaEncoderLayer(cfg.encoder.hidden_size, cfg.encoder.num_heads) \
+        self.encoder = nn.ModuleList([RNovaEncoderLayer(cfg.encoder.hidden_size, cfg.encoder.num_heads, cfg.encoder.dropout_rate, cfg.device) \
                                       for _ in range(cfg.encoder.num_layers)])
 
-        self.gnova_proj = nn.Linear(cfg.encoder.hidden_size, cfg.encoder.hidden_size)
+        self.gnova_proj = nn.Linear(cfg.encoder.hidden_size, cfg.encoder.hidden_size * 2)
+        self.gnova_dropout = nn.Dropout(cfg.encoder.dropout_rate)
+
         self.input_ln = nn.LayerNorm(cfg.encoder.hidden_size)
         self.output_ln = nn.LayerNorm(cfg.encoder.hidden_size)
 
@@ -72,7 +75,7 @@ class RNovaEncoder(nn.Module):
         precursor_charges = [x['precursor_charge'] for x in meta_info_list]
 
         gnova_features = self.process_all_gnova_features(gnova_encoder_output_list, indices, sizes, precursor_charges)
-        gnova_features = self.gnova_proj(gnova_features)
+        gnova_features = glu(self.gnova_proj(self.gnova_dropout(gnova_features))) # gated mechanism
 
         absolute_embedded = self.abosolute_embedding(moverz, peak_class_index, pos_index, ms1_ms2_flag)
 

@@ -23,7 +23,7 @@ class RNovaDecoder(nn.Module):
     def __init__(self,cfg, output_dtype) -> None:
         super().__init__()
         self.cfg = cfg
-        self.rnova_decoder_layers = nn.ModuleList([RNovaDecoderLayer(cfg) for _ in range(cfg.decoder.num_layers)])
+        self.rnova_decoder_layers = nn.ModuleList([RNovaDecoderLayer(cfg, cfg.decoder.dropout_rate) for _ in range(cfg.decoder.num_layers)])
 
         self.mass_embedding = RelativeInputEmbedding(cfg, output_dtype)
         self.pos_embedding = nn.Embedding(self.cfg.data.peptide_max_len, self.cfg.decoder.hidden_size)

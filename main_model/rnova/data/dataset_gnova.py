@@ -227,7 +227,7 @@ class GenovaDataset():
 
             for j in range(len(cofragment)):
                 if cofragment[j] > 0:
-                    final_ion_label[j] = cofragment[j]
+                    final_ion_label[j] = cofragment[j] + len(self.ion_types) + 1
 
         for j in range(len(target_labels)):
             if target_labels[j] > 0:

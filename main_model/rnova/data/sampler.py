@@ -53,31 +53,34 @@ class RNovaBucketBatchSampler(Sampler):
         for _, row in tqdm(self.spec_header.iterrows(), total=len(self.spec_header), desc='Generating Peak Number'):
 
             if astral_filtering:
-                with open(os.path.join(self.dataset_dir, row['MSGP File Name']), 'rb') as f:
-                    f.seek(row['MSGP Datablock Pointer'])
+                if 'MS1 Filter Peak Number' in row:
+                    peak_number = get_total_peak_num(row['MS1 Filter Peak Number'], row['MS2 Filter Peak Number'], row['Charge'], self.cfg)
+                else:
+                    with open(os.path.join(self.dataset_dir, row['MSGP File Name']), 'rb') as f:
+                        f.seek(row['MSGP Datablock Pointer'])
+                        try:
+                            spec = pickle.loads(gzip.decompress(f.read(row['MSGP Datablock Length'])))
+                        except Exception as e:
+                            print("Cannot read data")
+                            print("file_name, ", row['MSGP File Name'])
+                            raise (e)
+
+                    ms1_xgrams = spec['ms1_xgrams']
                     try:
-                        spec = pickle.loads(gzip.decompress(f.read(row['MSGP Datablock Length'])))
-                    except Exception as e:
-                        print("Cannot read data")
-                        print("file_name, ", row['MSGP File Name'])
-                        raise (e)
+                        ms1_multiscan_indices = torch.sum(ms1_xgrams.bool(), dim=1) >= 2
+                        ms1_num = torch.sum(ms1_multiscan_indices).item()
+                    except IndexError:
+                        ms1_num = 0
 
-                ms1_xgrams = spec['ms1_xgrams']
-                try:
-                    ms1_multiscan_indices = torch.sum(ms1_xgrams.bool(), dim=1) >= 2
-                    ms1_num = torch.sum(ms1_multiscan_indices).item()
-                except IndexError:
-                    ms1_num = 0
+                    ms2_xgrams = spec['ms2_xgrams']
+                    ms2_multiscan_indices = torch.sum(ms2_xgrams.bool(), dim=1) >= 2
+                    ms2_num = torch.sum(ms2_multiscan_indices).item()
 
-                ms2_xgrams = spec['ms2_xgrams']
-                ms2_multiscan_indices = torch.sum(ms2_xgrams.bool(), dim=1) >= 2
-                ms2_num = torch.sum(ms2_multiscan_indices).item()
-
-                peak_number = get_total_peak_num(ms1_num, ms2_num, row['Charge'], self.cfg)
-                peak_num_list.append(peak_number)
+                    peak_number = get_total_peak_num(ms1_num, ms2_num, row['Charge'], self.cfg)
             else:
                 peak_number = get_total_peak_num(row['MS1 Peak Number'], row['MS2 Peak Number'], row['Charge'], self.cfg)
-                peak_num_list.append(peak_number)
+
+            peak_num_list.append(peak_number)
 
         self.spec_header['Peak Number'] = peak_num_list
 
@@ -217,31 +220,34 @@ class RNovaSequentialSampler(Sampler):
         for _, row in tqdm(self.spec_header.iterrows(), total=len(self.spec_header), desc='Generating Peak Number'):
 
             if astral_filtering:
-                with open(os.path.join(self.dataset_dir, row['MSGP File Name']), 'rb') as f:
-                    f.seek(row['MSGP Datablock Pointer'])
+                if 'MS1 Filter Peak Number' in row:
+                    peak_number = get_total_peak_num(row['MS1 Filter Peak Number'], row['MS2 Filter Peak Number'], row['Charge'], self.cfg)
+                else:
+                    with open(os.path.join(self.dataset_dir, row['MSGP File Name']), 'rb') as f:
+                        f.seek(row['MSGP Datablock Pointer'])
+                        try:
+                            spec = pickle.loads(gzip.decompress(f.read(row['MSGP Datablock Length'])))
+                        except Exception as e:
+                            print("Cannot read data")
+                            print("file_name, ", row['MSGP File Name'])
+                            raise (e)
+
+                    ms1_xgrams = spec['ms1_xgrams']
                     try:
-                        spec = pickle.loads(gzip.decompress(f.read(row['MSGP Datablock Length'])))
-                    except Exception as e:
-                        print("Cannot read data")
-                        print("file_name, ", row['MSGP File Name'])
-                        raise (e)
+                        ms1_multiscan_indices = torch.sum(ms1_xgrams.bool(), dim=1) >= 2
+                        ms1_num = torch.sum(ms1_multiscan_indices).item()
+                    except IndexError:
+                        ms1_num = 0
 
-                ms1_xgrams = spec['ms1_xgrams']
-                try:
-                    ms1_multiscan_indices = torch.sum(ms1_xgrams.bool(), dim=1) >= 2
-                    ms1_num = torch.sum(ms1_multiscan_indices).item()
-                except IndexError:
-                    ms1_num = 0
+                    ms2_xgrams = spec['ms2_xgrams']
+                    ms2_multiscan_indices = torch.sum(ms2_xgrams.bool(), dim=1) >= 2
+                    ms2_num = torch.sum(ms2_multiscan_indices).item()
 
-                ms2_xgrams = spec['ms2_xgrams']
-                ms2_multiscan_indices = torch.sum(ms2_xgrams.bool(), dim=1) >= 2
-                ms2_num = torch.sum(ms2_multiscan_indices).item()
-
-                peak_number = get_total_peak_num(ms1_num, ms2_num, row['Charge'], self.cfg)
-                peak_num_list.append(peak_number)
+                    peak_number = get_total_peak_num(ms1_num, ms2_num, row['Charge'], self.cfg)
             else:
                 peak_number = get_total_peak_num(row['MS1 Peak Number'], row['MS2 Peak Number'], row['Charge'], self.cfg)
-                peak_num_list.append(peak_number)
+
+            peak_num_list.append(peak_number)
 
         self.spec_header['Peak Number'] = peak_num_list
 

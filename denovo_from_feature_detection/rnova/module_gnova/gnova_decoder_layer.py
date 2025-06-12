@@ -14,7 +14,8 @@ class MaskedSelfRelation(nn.Module):
                  d_relation: int,
                  alpha: float,
                  beta: float,
-                 dropout_rate: float):
+                 dropout_rate: float,
+                 device='gpu'):
         """_summary_
 
         Args:
@@ -46,7 +47,7 @@ class MaskedSelfRelation(nn.Module):
         nn.init.xavier_normal_(self.linear_v.weight, gain=beta)
         nn.init.xavier_normal_(self.output_layer.weight, gain=beta)
 
-        self.self_attention = FlashQKV(softmax_scale=1.0 / math.sqrt(self.head_dim), attention_dropout=dropout_rate, causal=True)
+        self.self_attention = FlashQKV(softmax_scale=1.0 / math.sqrt(self.head_dim), attention_dropout=dropout_rate, causal=True, device=device)
 
     def forward(self, tgt):
         """_summary_
@@ -77,7 +78,8 @@ class TransRelation(nn.Module):
                  d_relation: int,
                  alpha: float,
                  beta: float,
-                 dropout_rate: float):
+                 dropout_rate: float,
+                 device='gpu'):
         """_summary_
 
         Args:
@@ -112,7 +114,7 @@ class TransRelation(nn.Module):
         nn.init.xavier_normal_(self.linear_v.weight, gain=beta)
         nn.init.xavier_normal_(self.output_layer.weight, gain=beta)
 
-        self.trans_attention = FlashQKV(softmax_scale=1.0 / math.sqrt(self.head_dim), attention_dropout=dropout_rate)
+        self.trans_attention = FlashQKV(softmax_scale=1.0 / math.sqrt(self.head_dim), attention_dropout=dropout_rate, device=device)
 
     def forward(self, tgt, step_mass_embed, mem, peak_mzs_embed, neg_peak_mzs_embed):
         """_summary_
@@ -166,11 +168,12 @@ class GNovaDecoderLayer(nn.Module):
             d_relation: int,
             alpha,
             beta,
-            dropout_rate: float):
+            dropout_rate: float,
+            device='gpu'):
 
         super().__init__()
-        self.self_relation = MaskedSelfRelation(tgt_hidden_size, num_heads, d_relation, alpha, beta, dropout_rate)
-        self.trans_relation = TransRelation(tgt_hidden_size, mem_hidden_size, num_heads, d_relation, alpha, beta, dropout_rate)
+        self.self_relation = MaskedSelfRelation(tgt_hidden_size, num_heads, d_relation, alpha, beta, dropout_rate, device)
+        self.trans_relation = TransRelation(tgt_hidden_size, mem_hidden_size, num_heads, d_relation, alpha, beta, dropout_rate, device)
         self.ffn = FFNGLU(tgt_hidden_size, alpha, beta, dropout_rate)
 
     def forward(self, *, tgt, step_mass_ebed, mem, peak_mzs_embed, neg_peak_mzs_embed):

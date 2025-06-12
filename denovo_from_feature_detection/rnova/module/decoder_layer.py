@@ -2,6 +2,7 @@ import torch
 from flash_attn import flash_attn_func
 from torch import nn
 from torch.utils.checkpoint import checkpoint
+import torch.nn.functional as F
 from rnova.module.encoder_layer import FFNGLU
 
 
@@ -25,11 +26,11 @@ class MaskedSelfMultiHeadAttn(nn.Module):
         self.linear_k = nn.Linear(self.hidden_size, self.hidden_size)
         self.linear_v = nn.Linear(self.hidden_size, self.hidden_size)
 
-
         self.output_layer = nn.Linear(self.hidden_size, self.hidden_size)
 
         self.ln = nn.LayerNorm(self.hidden_size)
-
+        self.dropout = nn.Dropout(cfg.decoder.dropout_rate)
+        self.device = cfg.device
 
     def forward(self, tgt, step_mass_embed):
         """_summary_
@@ -48,9 +49,20 @@ class MaskedSelfMultiHeadAttn(nn.Module):
 
         tgt_q, tgt_k = self.apply_rope(tgt_q, step_mass_embed), self.apply_rope(tgt_k, step_mass_embed)
 
-        post_node = flash_attn_func(tgt_q, tgt_k, tgt_v, causal=True)  # (batch_size, seq_len, num_q_heads, head_dim)
+        if self.device == 'gpu':
+            post_node = flash_attn_func(tgt_q, tgt_k, tgt_v, causal=True)  # (batch_size, seq_len, num_q_heads, head_dim)
+        else:
+            tgt_q = tgt_q.permute(0, 2, 1, 3)
+            tgt_k = tgt_k.permute(0, 2, 1, 3)
+            tgt_v = tgt_v.permute(0, 2, 1, 3)
+            post_node = F.scaled_dot_product_attention(tgt_q, tgt_k, tgt_v,
+                                                      attn_mask=None,
+                                                      is_causal=True,
+                                                      scale=1.0 / self.head_size ** 0.5)
+            post_node = post_node.permute(0, 2, 1, 3)
+
         post_node = post_node.flatten(2, 3)
-        post_node = self.output_layer(post_node)
+        post_node = self.dropout(self.output_layer(post_node))
         post_tgt = self.ln(tgt + post_node)
         return post_tgt  # [b, q_len, tgt_hidden_size]
 
@@ -85,6 +97,8 @@ class TransMultiHeadAttn(nn.Module):
         self.output_layer = nn.Linear(self.tgt_hidden_size, self.tgt_hidden_size)
 
         self.ln = nn.LayerNorm(self.tgt_hidden_size)
+        self.dropout = nn.Dropout(cfg.decoder.dropout_rate)
+        self.device = cfg.device
 
     def forward(self, tgt, step_mass_embed, mem, peak_mzs_embed):
         """_summary_
@@ -108,9 +122,20 @@ class TransMultiHeadAttn(nn.Module):
 
         mem_k = self.apply_rope(mem_k, peak_mzs_embed)
 
-        post_node = flash_attn_func(tgt_q, mem_k, mem_v)  # (batch_size, q_len, num_q_heads, head_dim)
+        if self.device == 'gpu':
+            post_node = flash_attn_func(tgt_q, mem_k, mem_v)  # (batch_size, q_len, num_q_heads, head_dim)
+        elif self.device == 'cpu':
+            tgt_q = tgt_q.permute(0, 2, 1, 3)
+            mem_k = mem_k.permute(0, 2, 1, 3)
+            mem_v = mem_v.permute(0, 2, 1, 3)
+            post_node = F.scaled_dot_product_attention(tgt_q, mem_k, mem_v,
+                                                      attn_mask=None,
+                                                      is_causal=False,
+                                                      scale=1.0 / self.head_size ** 0.5)
+            post_node = post_node.permute(0, 2, 1, 3)
+
         post_node = post_node.flatten(2, 3)
-        post_node = self.output_layer(post_node)
+        post_node = self.dropout(self.output_layer(post_node))
         post_node = self.ln(tgt + post_node)
         return post_node  # [b, q_len, tgt_hidden_size]
 
@@ -122,14 +147,14 @@ class TransMultiHeadAttn(nn.Module):
                              x1 * dis_cos + x0 * dis_sin], dim=-1)
 
 class RNovaDecoderLayer(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, dropout=0.1):
 
         super().__init__()
         self.self_relation = MaskedSelfMultiHeadAttn(cfg)
         self.trans_relation = TransMultiHeadAttn(cfg)
 
         tgt_hidden_size = cfg.decoder.hidden_size
-        self.ffn = FFNGLU(tgt_hidden_size)
+        self.ffn = FFNGLU(tgt_hidden_size, dropout)
 
     def forward(self, *, tgt, step_mass_embed, mem, peak_mzs_embed):
         tgt = checkpoint(self.self_relation, tgt, step_mass_embed, use_reentrant=False)
