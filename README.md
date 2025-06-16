@@ -14,6 +14,8 @@ sudo apt install git-lfs
 git lfs install
 ```
 
+Also, we updated the headers in the Dropbox data directory, please make sure to check them out.
+
 # Subfolders and more README
 
 Under the ``xcorr_theory`` folder, you can find the code for the theoretical analysis of peptide recall under different experimental conditions. Under folder ``pretrain_model`` and ``main_model`` you can find the pretrain and downstream models respectively.
