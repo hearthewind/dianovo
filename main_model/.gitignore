@@ -3,11 +3,9 @@ __pycache__
 *.so
 *.c
 /wandb
-/save/ckpt/*
 /prediction/*
 /output
 build
-*.npy
 /outputs
 nohup.out
 

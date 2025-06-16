@@ -20,14 +20,8 @@ class GNova(nn.Module):
             nn.Linear(cfg.encoder.hidden_size, cfg.encoder.hidden_size),
             nn.LayerNorm(cfg.encoder.hidden_size),
             nn.ReLU(),
-            nn.Linear(cfg.encoder.hidden_size, len(label_types) * 2 - 1)
+            nn.Linear(cfg.encoder.hidden_size, len(label_types))
         )
-        # self.ionsource_linear = nn.Sequential(
-        #     nn.Linear(cfg.encoder.hidden_size, cfg.encoder.hidden_size),
-        #     nn.LayerNorm(cfg.encoder.hidden_size),
-        #     nn.ReLU(),
-        #     nn.Linear(cfg.encoder.hidden_size, cfg.encoder.hidden_size)
-        # )
     
     def forward(self, encoder_input, decoder_input=None):
         encoder_output = self.encoder(**encoder_input)
