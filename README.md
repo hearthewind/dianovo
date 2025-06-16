@@ -6,6 +6,8 @@ This is the codebase for the paper "Disentangling the Complex Multiplexed DIA Sp
 
 Our repository adopts new checkpoints different from the previous version, please make sure to download the new checkpoints via git-lfs, the new checkpoints should automatically download to appropriate locations during ``git clone``.
 
+Note that with git lfs, cloning will take a while, as it will download the large files in the background.
+
 On Ubuntu, you can install git-lfs by
 ```
 sudo apt install git-lfs
