@@ -2,6 +2,16 @@
 
 This is the codebase for the paper "Disentangling the Complex Multiplexed DIA Spectra in De Novo Peptide Sequencing".
 
+# Notice
+
+Our repository adopts new checkpoints different from the previous version, please make sure to download the new checkpoints via git-lfs, the new checkpoints should automatically download to appropriate locations during ``git clone``.
+
+On Ubuntu, you can install git-lfs by
+```
+sudo apt install git-lfs
+git lfs install
+```
+
 # Subfolders and more README
 
 Under the ``xcorr_theory`` folder, you can find the code for the theoretical analysis of peptide recall under different experimental conditions. Under folder ``pretrain_model`` and ``main_model`` you can find the pretrain and downstream models respectively.
@@ -18,7 +28,7 @@ https://www.dropbox.com/scl/fo/ij9vjz3v9lig0vpqwmvh5/AEGAxp-NpXxKCqdDnSrKkRs?rlk
 
 Please install the Python environment using conda by 
 
-``conda env create -f environment.yml``
+``conda env create -f environment_new.yml``
 
 which should take less than 10 minutes, the program is tested on Ubuntu 24.04 with Python 3.9.
 

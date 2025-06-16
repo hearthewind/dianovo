@@ -2,8 +2,8 @@
 
 python -u main.py mode=inference task=sequence_generation device=gpu infer=sequence_generation_inference \
 serialized_model_path=save/ckpt \
-gnova_file_name=GNova-Astral_pretrain-453 \
-wandb.project=RGNova-Astral wandb.name=sg-453 \
+gnova_file_name=GNova-Astral_pretrain \
+wandb.project=RGNova-Astral wandb.name=sg \
 infer.optimal_path_file=prediction/optimal_path/386on453.csv \
 infer.output_file=prediction/sequence_generation/386on453.csv \
 infer.dataset_dir=/home/m/data/Dropbox/shared/dianovo_data/processed_data_46386/ \
