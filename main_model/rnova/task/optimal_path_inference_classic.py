@@ -349,6 +349,19 @@ class OptimalPathInference:
             if torch.is_tensor(idx): idx = idx.tolist()
             spec_head = self.spec_header.loc[idx[0]]
 
+            ######
+            # Filter large peptides
+
+            # total_peak_num = spec_head['Peak Number']
+            # if total_peak_num > 40_000:
+            #     continue
+
+            # raw_peak_number = get_total_peak_num(spec_head['MS1 Peak Number'], spec_head['MS2 Peak Number'], spec_head['Charge'], self.cfg)
+            # if raw_peak_number <= 40_000 or raw_peak_number > 80_000:
+            #     continue
+
+            ######
+
             precursor_charge = int(spec_head['Charge'])
             precursor_mz = float(spec_head['m/z'])
             precursor_mass = Ion.precursorion2mass(precursor_mz, precursor_charge)
@@ -356,7 +369,9 @@ class OptimalPathInference:
             with torch.no_grad():
                 encoder_input = input_cuda(encoder_input, self.device)
                 with self.ctx:
-                    gnova_output_list = [self.model_gnova.encoder(**gnova_encoder_input_list[0])]
+                    gnova_encoder_outputs = self.model_gnova.encoder(**gnova_encoder_input_list[0])
+                    gnova_logits = self.model_gnova.iontype_finear(gnova_encoder_outputs[-1])
+                    gnova_output_list = [(gnova_encoder_outputs, gnova_logits)]
                     encoder_output = self.model.encoder(**encoder_input, meta_info_list=meta_info_list, gnova_encoder_output_list=gnova_output_list)
                     # shape is (1, seq_len, hidden_size)
 
@@ -443,9 +458,10 @@ class OptimalPathInference:
                 writer_path.writerow({'graph_idx': idx[0], 'pred_path': path_pred_print, 'pred_prob': pred_prob, \
                                       'label_path': path_label_print, 'pred_seq': seq_predict})
 
+
                 #####
                 # Limit the total number of peptide
-                # if peptide_predict_num >= 100:
+                # if peptide_predict_num >= 10_000:
                 #     break
                 #####
 

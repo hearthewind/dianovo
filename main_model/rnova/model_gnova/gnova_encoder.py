@@ -110,7 +110,7 @@ class GNovaEncoder(nn.Module):
         self.genova_encoder_layers = nn.ModuleList([ \
             GNovaEncoderLayer(hidden_size = cfg.encoder_gnova.hidden_size, num_heads=cfg.encoder_gnova.num_heads, d_relation = cfg.encoder_gnova.d_relation,
                               alpha = (2*cfg.encoder_gnova.num_layers)**0.25, beta = (8*cfg.encoder_gnova.num_layers)**-0.25,
-                              dropout_rate = cfg.encoder_gnova.dropout_rate, device=cfg.device) for _ in range(cfg.encoder_gnova.num_layers)])
+                              dropout_rate = cfg.encoder_gnova.dropout_rate, device_type=cfg.device) for _ in range(cfg.encoder_gnova.num_layers)])
         
     def forward(self, moverz, xgram, feature, peak_flag_index):
         # peak_num = peak_features.size(1)
@@ -123,6 +123,8 @@ class GNovaEncoder(nn.Module):
 
         peak_mzs_embed = self.peak_mzs_embedding(moverz)
         neg_peak_mzs_embed = self.peak_mzs_embedding(-moverz)
-        for genova_encoder_layer in self.genova_encoder_layers[:1]:
+        all_peak_features = []
+        for genova_encoder_layer in self.genova_encoder_layers:
             peak_features = genova_encoder_layer(peak_features, peak_mzs_embed, neg_peak_mzs_embed)
-        return peak_features
+            all_peak_features.append(peak_features)
+        return all_peak_features

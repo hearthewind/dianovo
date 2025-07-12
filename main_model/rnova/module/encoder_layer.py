@@ -9,7 +9,7 @@ class SelfMultiHeadAttn(nn.Module):
                  hidden_size: int,
                  num_heads: int,
                  dropout=0.1,
-                 device='gpu'):
+                 device_type='gpu'):
         super().__init__()
         assert hidden_size%num_heads == 0
         self.num_heads = num_heads
@@ -20,7 +20,7 @@ class SelfMultiHeadAttn(nn.Module):
         self.output_layer = nn.Linear(hidden_size, hidden_size)
         self.ln = nn.LayerNorm(hidden_size)
         self.dropout = nn.Dropout(dropout)
-        self.device = device
+        self.device_type = device_type
 
     def forward(self,x,pos):
         batch_size = x.size(0)
@@ -30,9 +30,9 @@ class SelfMultiHeadAttn(nn.Module):
         v = v.view(batch_size, -1, self.num_heads, self.head_size)
         q, k = self.apply_rope(q, pos), self.apply_rope(k, pos)
 
-        if self.device == 'gpu':
+        if self.device_type == 'gpu':
             postx = flash_attn_func(q, k, v).flatten(2,3)
-        else:
+        elif self.device_type == 'cpu':
             q = q.permute(0, 2, 1, 3)
             k = k.permute(0, 2, 1, 3)
             v = v.permute(0, 2, 1, 3)
@@ -41,6 +41,8 @@ class SelfMultiHeadAttn(nn.Module):
                                                    is_causal=False,
                                                    scale=1.0/self.head_size**0.5)
             postx = postx.permute(0, 2, 1, 3).flatten(2,3)
+        else:
+            raise ValueError(f'Unsupported device type: {self.device_type}')
 
         postx = self.dropout(self.output_layer(postx))
         x = self.ln(x + postx)
@@ -76,14 +78,15 @@ class FFNGLU(nn.Module):
         return x
 
 class RNovaEncoderLayer(nn.Module):
-    def __init__(self, hidden_size, num_heads, dropout=0.1, device='gpu'):
+    def __init__(self, hidden_size, num_heads, dropout=0.1, device_type='gpu'):
         super().__init__()
-        self.mha = SelfMultiHeadAttn(hidden_size, num_heads, dropout, device)
+        self.mha = SelfMultiHeadAttn(hidden_size, num_heads, dropout, device_type)
         self.ffn = FFNGLU(hidden_size, dropout)
 
     def forward(self,x,pos):
-        x = checkpoint(self.mha, x, pos, use_reentrant=False)
-        x = checkpoint(self.ffn, x, use_reentrant=False)
-        #x = self.mha(x,pos)
-        #x = self.ffn(x)
+        # x = checkpoint(self.mha, x, pos, use_reentrant=False)
+        # x = checkpoint(self.ffn, x, use_reentrant=False)
+
+        x = self.mha(x,pos)
+        x = self.ffn(x)
         return x

@@ -9,10 +9,10 @@ from utils.data.BasicClass import Residual_seq
 
 
 class RNova(nn.Module):
-    def __init__(self, cfg, output_dtype, device):
+    def __init__(self, cfg, output_dtype):
         super().__init__()
         self.cfg = cfg
-        self.encoder = RNovaEncoder(cfg, output_dtype, device)
+        self.encoder = RNovaEncoder(cfg, output_dtype)
 
         if self.cfg.task == 'node_classification':
             self.output_linear = nn.Linear(cfg.encoder.hidden_size, 1)
@@ -40,10 +40,12 @@ class RNova(nn.Module):
         with torch.no_grad():
             for encoder_input in enc_gnova:
                 try:
-                    gnova_encoder_output = gnova_model.encoder(**encoder_input)
+                    gnova_encoder_outputs = gnova_model.encoder(**encoder_input)
+                    gnova_logits = gnova_model.iontype_finear(gnova_encoder_outputs[-1])
                 except AttributeError:
-                    gnova_encoder_output = gnova_model.module.encoder(**encoder_input)
-                gnova_encoder_output_list.append(gnova_encoder_output)
+                    gnova_encoder_outputs = gnova_model.module.encoder(**encoder_input)
+                    gnova_logits = gnova_model.module.iontype_finear(gnova_encoder_outputs[-1])
+                gnova_encoder_output_list.append((gnova_encoder_outputs, gnova_logits))
         return self.forward_rnova(enc_rnova, gnova_encoder_output_list, meta_info_list, decoder_input)
 
     def forward_rnova(self, encoder_input, gnova_encoder_output_list, meta_info_list, decoder_input=None):

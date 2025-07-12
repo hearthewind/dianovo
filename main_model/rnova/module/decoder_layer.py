@@ -30,7 +30,7 @@ class MaskedSelfMultiHeadAttn(nn.Module):
 
         self.ln = nn.LayerNorm(self.hidden_size)
         self.dropout = nn.Dropout(cfg.decoder.dropout_rate)
-        self.device = cfg.device
+        self.device_type = cfg.device
 
     def forward(self, tgt, step_mass_embed):
         """_summary_
@@ -49,7 +49,7 @@ class MaskedSelfMultiHeadAttn(nn.Module):
 
         tgt_q, tgt_k = self.apply_rope(tgt_q, step_mass_embed), self.apply_rope(tgt_k, step_mass_embed)
 
-        if self.device == 'gpu':
+        if self.device_type == 'gpu':
             post_node = flash_attn_func(tgt_q, tgt_k, tgt_v, causal=True)  # (batch_size, seq_len, num_q_heads, head_dim)
         else:
             tgt_q = tgt_q.permute(0, 2, 1, 3)
@@ -98,7 +98,7 @@ class TransMultiHeadAttn(nn.Module):
 
         self.ln = nn.LayerNorm(self.tgt_hidden_size)
         self.dropout = nn.Dropout(cfg.decoder.dropout_rate)
-        self.device = cfg.device
+        self.device_type = cfg.device
 
     def forward(self, tgt, step_mass_embed, mem, peak_mzs_embed):
         """_summary_
@@ -122,9 +122,9 @@ class TransMultiHeadAttn(nn.Module):
 
         mem_k = self.apply_rope(mem_k, peak_mzs_embed)
 
-        if self.device == 'gpu':
+        if self.device_type == 'gpu':
             post_node = flash_attn_func(tgt_q, mem_k, mem_v)  # (batch_size, q_len, num_q_heads, head_dim)
-        elif self.device == 'cpu':
+        elif self.device_type == 'cpu':
             tgt_q = tgt_q.permute(0, 2, 1, 3)
             mem_k = mem_k.permute(0, 2, 1, 3)
             mem_v = mem_v.permute(0, 2, 1, 3)
@@ -133,6 +133,8 @@ class TransMultiHeadAttn(nn.Module):
                                                       is_causal=False,
                                                       scale=1.0 / self.head_size ** 0.5)
             post_node = post_node.permute(0, 2, 1, 3)
+        else:
+            raise NotImplementedError(f"Unsupported device type: {self.device_type}")
 
         post_node = post_node.flatten(2, 3)
         post_node = self.dropout(self.output_layer(post_node))
@@ -157,7 +159,11 @@ class RNovaDecoderLayer(nn.Module):
         self.ffn = FFNGLU(tgt_hidden_size, dropout)
 
     def forward(self, *, tgt, step_mass_embed, mem, peak_mzs_embed):
-        tgt = checkpoint(self.self_relation, tgt, step_mass_embed, use_reentrant=False)
-        tgt = checkpoint(self.trans_relation, tgt, step_mass_embed, mem, peak_mzs_embed, use_reentrant=False)
-        tgt = checkpoint(self.ffn, tgt, use_reentrant=False)
+        # tgt = checkpoint(self.self_relation, tgt, step_mass_embed, use_reentrant=False)
+        # tgt = checkpoint(self.trans_relation, tgt, step_mass_embed, mem, peak_mzs_embed, use_reentrant=False)
+        # tgt = checkpoint(self.ffn, tgt, use_reentrant=False)
+
+        tgt = self.self_relation(tgt, step_mass_embed)
+        tgt = self.trans_relation(tgt, step_mass_embed, mem, peak_mzs_embed)
+        tgt = self.ffn(tgt)
         return tgt

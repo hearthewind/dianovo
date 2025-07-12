@@ -30,13 +30,13 @@ class FlashQKV(nn.Module):
                            (default: 0.0)
     """
 
-    def __init__(self, softmax_scale=None, attention_dropout=0.0, causal=False, device='gpu'):
+    def __init__(self, softmax_scale=None, attention_dropout=0.0, causal=False, device_type='gpu'):
         super().__init__()
         assert attn_unpadded_func is not None, "FlashAttention is not installed"
         self.softmax_scale = softmax_scale
         self.drop = nn.Dropout(attention_dropout)
         self.causal = causal
-        self.device = device
+        self.device_type = device_type
 
     def forward(self, q, k, v):
         """Implements the multihead softmax attention.
@@ -57,7 +57,7 @@ class FlashQKV(nn.Module):
         batch_size, seqlen_q = q.shape[0], q.shape[1]
         seqlen_k = k.shape[1]
 
-        if self.device == 'gpu':
+        if self.device_type == 'gpu':
             q, k, v = [rearrange(x, 'b s ... -> (b s) ...') for x in [q, k, v]]
             cu_seqlens_q = torch.arange(0, (batch_size + 1) * seqlen_q, step=seqlen_q, dtype=torch.int32, device = q.device)
             cu_seqlens_k = torch.arange(0, (batch_size + 1) * seqlen_k, step=seqlen_k, dtype=torch.int32, device=k.device)
@@ -72,7 +72,7 @@ class FlashQKV(nn.Module):
             )
 
             post_v = rearrange(post_v, '(b s) ... -> b s ...', b=batch_size)
-        elif self.device == 'cpu':
+        elif self.device_type == 'cpu':
             q = q.permute(0, 2, 1, 3)
             k = k.permute(0, 2, 1, 3)
             v = v.permute(0, 2, 1, 3)
@@ -84,6 +84,8 @@ class FlashQKV(nn.Module):
                                                     scale=self.softmax_scale,
                                                     enable_gqa=True)
             post_v = post_v.permute(0, 2, 1, 3)
+        else:
+            raise ValueError(f"Unsupported device type: {self.device_type}. Supported types are 'gpu' and 'cpu'.")
 
         return post_v
 
@@ -95,7 +97,7 @@ class MultiHeadRelation(nn.Module):
                  alpha: float,
                  beta: float,
                  dropout_rate: float,
-                 device='gpu'):
+                 device_type='gpu'):
         super().__init__()
         self.d_relation = d_relation
         self.num_kv_heads = num_heads
@@ -116,7 +118,7 @@ class MultiHeadRelation(nn.Module):
         nn.init.xavier_normal_(self.linear_v.weight, gain=beta)
         nn.init.xavier_normal_(self.output_layer.weight, gain=beta)
 
-        self.self_attention = FlashQKV(softmax_scale=1.0/math.sqrt(self.head_dim), attention_dropout=dropout_rate, device=device)
+        self.self_attention = FlashQKV(softmax_scale=1.0/math.sqrt(self.head_dim), attention_dropout=dropout_rate, device_type=device_type)
 
     def forward(self, peak_features, peak_mzs_embed, neg_peak_mzs_embed):
         peak_num = peak_features.size(1)
@@ -177,10 +179,10 @@ class GNovaEncoderLayer(nn.Module):
                  alpha: float, 
                  beta: float, 
                  dropout_rate: float,
-                 device='gpu'):
+                 device_type='gpu'):
 
         super().__init__()
-        self.relation = MultiHeadRelation(hidden_size, num_heads, d_relation, alpha, beta, dropout_rate, device)
+        self.relation = MultiHeadRelation(hidden_size, num_heads, d_relation, alpha, beta, dropout_rate, device_type)
         self.ffn = FFNGLU(hidden_size, alpha, beta, dropout_rate)
 
     def forward(self, peak_features, peak_mzs_embed, neg_peak_mzs_embed):

@@ -15,7 +15,7 @@ class GNovaDecoder(nn.Module):
                                                                       alpha=(2 * cfg.decoder_gnova.num_layers) ** 0.25,
                                                                       beta=(8 * cfg.decoder_gnova.num_layers) ** -0.25,
                                                                       dropout_rate = cfg.decoder_gnova.dropout_rate,
-                                                                      device=cfg.device) for _ in range(cfg.decoder_gnova.num_layers)])
+                                                                      device_type=cfg.device) for _ in range(cfg.decoder_gnova.num_layers)])
 
         self.head_size = cfg.decoder_gnova.d_relation // cfg.decoder_gnova.num_heads
 

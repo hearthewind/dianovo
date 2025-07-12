@@ -52,7 +52,7 @@ class Task:
             self.distributed = False
 
     def initialize(self, *, train_spec_header,train_dataset_dir,val_spec_header,val_dataset_dir):
-        self.model = RNova(self.cfg, float16_type, self.device).to(self.device)
+        self.model = RNova(self.cfg, float16_type).to(self.device)
         self.model_gnova = GNova(self.cfg, float16_type).to(self.device)
         self.model_gnova.eval()
 
@@ -105,7 +105,7 @@ class Task:
     def test_initialize(self, *, test_spec_header=None,test_dataset_dir=None):
         assert not self.distributed
 
-        self.model = RNova(self.cfg, float16_type, self.device).to(self.device)
+        self.model = RNova(self.cfg, float16_type).to(self.device)
         self.persistent_file_name = os.path.join(self.serialized_model_path, self.cfg.wandb.project + '_' + self.cfg.wandb.name + '.pt')
         print('checkpoint: ', self.persistent_file_name)
         assert os.path.exists(self.persistent_file_name)
@@ -135,7 +135,7 @@ class Task:
     def train_loader(self,train_spec_header,train_dataset_dir):
         ds = RNovaDataset(self.cfg, spec_header=train_spec_header,dataset_dir_path=train_dataset_dir)
         sampler = RNovaBucketBatchSampler(self.cfg,train_dataset_dir,train_spec_header,self.cfg.sample.train_bin_boarders,self.cfg.sample.train_bin_batch_size,shuffle=True, drop_last=True)
-        train_dl = DataLoader(ds,batch_sampler=sampler,collate_fn=RNovaCollator(self.cfg),pin_memory=True,num_workers=2)
+        train_dl = DataLoader(ds,batch_sampler=sampler,collate_fn=RNovaCollator(self.cfg),pin_memory=True,num_workers=4)
         train_dl = DataPrefetcher(train_dl,self.device)
         return train_dl
 
@@ -144,7 +144,7 @@ class Task:
         sampler = RNovaBucketBatchSampler(self.cfg,val_dataset_dir,val_spec_header,self.cfg.sample.eval_bin_boarders,self.cfg.sample.eval_bin_batch_size,shuffle=False, drop_last=False)
         collate_fn = RNovaCollator(self.cfg)
         if self.distributed:
-            eval_dl = DataLoader(ds,batch_sampler=sampler,collate_fn=collate_fn,pin_memory=True,num_workers=2)
+            eval_dl = DataLoader(ds,batch_sampler=sampler,collate_fn=collate_fn,pin_memory=True,num_workers=4)
         else:
             eval_dl = DataLoader(ds,batch_sampler=sampler,collate_fn=collate_fn,pin_memory=True)
         eval_dl = DataPrefetcher(eval_dl,self.device)
@@ -170,7 +170,6 @@ class Task:
             'scheduler_state_dict':self.scheduler.state_dict()},self.persistent_file_name)
 
     def train(self):
-        self.model.train()
         total_step = 0
         loss_cum = 0
         true_positive = 0
@@ -181,6 +180,8 @@ class Task:
         if self.cfg.task == 'node_classification':
             for epoch in range(0, self.cfg.train.total_epoch):
                 for i, d in enumerate(self.train_dl,start=1):
+                    self.model.train()
+
                     encoder_input, label, label_mask = d['rnova']
                     gnova_encoder_input, _ = d['gnova']
                     meta_info_list = d['meta_info']
@@ -242,6 +243,8 @@ class Task:
         elif self.cfg.task == 'optimal_path':
             for epoch in range(0, self.cfg.train.total_epoch):
                 for i, d in enumerate(self.train_dl, start=1):
+                    self.model.train()
+
                     encoder_input, decoder_input, label, label_mask, _ = d['rnova']
                     gnova_encoder_input, _ = d['gnova']
                     meta_info_list = d['meta_info']
@@ -301,6 +304,8 @@ class Task:
         elif self.cfg.task == 'sequence_generation':
             for epoch in range(0, self.cfg.train.total_epoch):
                 for i, d in enumerate(self.train_dl, start=1):
+                    self.model.train()
+
                     encoder_input, decoder_input, label, label_mask, _ = d['rnova']
                     gnova_encoder_input, _ = d['gnova']
                     meta_info_list = d['meta_info']

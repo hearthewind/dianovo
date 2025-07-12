@@ -16,7 +16,7 @@ sh parallel_preprocessing.sh [num_worker] \
 [output dir]
 ```
 
-It takes around 1.6 seconds to process a single peptide, but this process is parallelized.
+[//]: # (It takes around 1.6 seconds to process a single peptide, but this process is parallelized.)
 
 # How to perform de novo sequencing
 
@@ -62,4 +62,4 @@ The sequence generation decoding will generate final de novo result in a .csv fi
 'graph_idx, 'pred_seq', 'pred_prob', 'pred_path'
 ```
 
-It again takes around 1.5 seconds for one peptide to go through either optimal path decoding or sequence generation decoding.
+[//]: # (It again takes around 1.5 seconds for one peptide to go through either optimal path decoding or sequence generation decoding.)
