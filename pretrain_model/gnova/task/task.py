@@ -202,7 +202,7 @@ class Task:
                         with autocast(dtype=float16_type):
                             iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
+                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
                             iontype_label_flatten = iontype_label.flatten().long()
 
                             iontype_loss = self.iontype_train_loss_fn(iontype_pred_flatten, iontype_label_flatten)
@@ -214,7 +214,7 @@ class Task:
                     elif self.cfg.device == 'cpu':
                         iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
+                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
                         iontype_label_flatten = iontype_label.flatten().long()
 
                         iontype_loss = self.iontype_train_loss_fn(iontype_pred_flatten, iontype_label_flatten)
@@ -509,7 +509,7 @@ class Task:
                         with autocast(dtype=float16_type):
                             iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
+                            iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
                             iontype_label_flatten = iontype_label.flatten().long()
 
                             iontype_loss = self.iontype_eval_loss_fn(iontype_pred_flatten, iontype_label_flatten)
@@ -517,7 +517,7 @@ class Task:
                     elif self.cfg.device == 'cpu':
                         iontype_pred, ionsource_emb = self.model(encoder_input)
 
-                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types) * 2 - 1)
+                        iontype_pred_flatten = iontype_pred.view(-1, len(label_types))
                         iontype_label_flatten = iontype_label.flatten().long()
 
                         iontype_loss = self.iontype_eval_loss_fn(iontype_pred_flatten, iontype_label_flatten)
