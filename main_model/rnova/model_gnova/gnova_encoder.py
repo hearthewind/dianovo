@@ -103,6 +103,7 @@ class GNovaEncoder(nn.Module):
         self.peak_feature_ln = nn.LayerNorm(cfg.encoder_gnova.hidden_size)
 
         self.head_size = cfg.encoder_gnova.d_relation // cfg.encoder_gnova.num_heads
+        self.abs_peak_mzs_embedding = SinusoidalPositionEmbedding(cfg.encoder.hidden_size, output_dtype)
         self.peak_mzs_embedding = SinusoidalPositionEmbedding(self.head_size, output_dtype)
 
         self.peak_flag_embedding = nn.Embedding(cfg.data.precursor_max_charge + 3, cfg.encoder_gnova.hidden_size, padding_idx=0)
@@ -119,7 +120,8 @@ class GNovaEncoder(nn.Module):
         xgram = xgram.unsqueeze(-1)
 
         peak_features = self.peak_feature_proj(feature) + self.peak_xgram_proj(xgram) + self.peak_flag_embedding(peak_flag_index.long())
-        peak_features = self.peak_feature_ln(peak_features)
+        abs_mz_enbedded = self.abs_peak_mzs_embedding(moverz)
+        peak_features = self.peak_feature_ln(peak_features + abs_mz_enbedded)
 
         peak_mzs_embed = self.peak_mzs_embedding(moverz)
         neg_peak_mzs_embed = self.peak_mzs_embedding(-moverz)
