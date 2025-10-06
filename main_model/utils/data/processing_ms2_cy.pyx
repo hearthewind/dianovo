@@ -72,6 +72,9 @@ def bin_one_peptide(dict peptide, object ms2_df, int scan_size=5, bint neighbori
     cdef cnp.ndarray[cnp.float32_t, ndim=2] ms2_xgrams
     cdef cnp.ndarray[cnp.float32_t, ndim=3] ms2_features
 
+    # Declare at top with other variables
+    cdef bint has_nonzero
+
     ############################################################################
     # 2) Retrieve MS2 scans and find best scan index
     ############################################################################
@@ -173,12 +176,18 @@ def bin_one_peptide(dict peptide, object ms2_df, int scan_size=5, bint neighbori
             intens_view[row, i] = binned_view[row, i]
 
         if do_neighboring:
-            if i > 0:
-                for row in range(total_scans):
-                    intens_view[row, i] += binned_view[row, i - 1]
-            if i < (num_bins - 1):
-                for row in range(total_scans):
-                    intens_view[row, i] += binned_view[row, i + 1]
+            has_nonzero = False  # Assign before use
+            for row in range(total_scans):
+                if intens_view[row, i] != 0:
+                    has_nonzero = True
+                    break
+            if has_nonzero:
+                if i > 0:
+                    for row in range(total_scans):
+                        intens_view[row, i] += binned_view[row, i - 1]
+                if i < (num_bins - 1):
+                    for row in range(total_scans):
+                        intens_view[row, i] += binned_view[row, i + 1]
 
     ############################################################################
     # 8) Identify valid bins ("any > 0")

@@ -14,7 +14,7 @@ from utils.data.spectrum import get_mzml_list, divide_feature_by_mzml, read_one_
 from utils.graph_constructor import graph_gen
 import random
 
-def main(worker, total_worker, input_mzml_folder, input_feature_file, input_whole_feature_file, output_folder)->None:
+def main(worker, file_worker, total_worker, total_file_worker, input_mzml_folder, input_feature_file, input_whole_feature_file, output_folder)->None:
     print('Reading diann result')
     raw_feature_list = read_diann_result(input_feature_file)
     whole_feature_list = read_diann_result(input_whole_feature_file)
@@ -30,16 +30,23 @@ def main(worker, total_worker, input_mzml_folder, input_feature_file, input_whol
 
     chosen_psm_list = divide_feature_by_mzml(raw_feature_list, chosen_mzml_list)
 
+    final_psm_list = []
+    assert 1 <= file_worker <= total_file_worker
+    for psm_head in chosen_psm_list:
+        num_psm_per_file_worker = int(len(psm_head) / total_file_worker)
+        start_i, end_i = num_psm_per_file_worker * (file_worker - 1), num_psm_per_file_worker * file_worker
+        final_psm_list.append(psm_head[start_i: end_i])
+
     print('Start generating graph')
-    for psm_head, mzml_file in zip(chosen_psm_list, chosen_mzml_list):
+    for psm_head, mzml_file in zip(final_psm_list, chosen_mzml_list):
         mzml_path = os.path.join(input_mzml_folder, mzml_file + '.mzML')
-        ms1_df, ms2_df = read_one_mzml(mzml_path, ion_mobility=False)
+        ms1_df, ms2_df = read_one_mzml(mzml_path, timstof=False)
 
         file_size = 0
         file_num = 0
-        writer = open(os.path.join(output_folder, f'{mzml_file}_{file_num}.msgp'), 'wb')
+        writer = open(os.path.join(output_folder, f'{mzml_file}_{file_worker}_{file_num}.msgp'), 'wb')
 
-        with open(os.path.join(output_folder, f'{mzml_file}.csv'), 'w', buffering=1) as index_writer:
+        with open(os.path.join(output_folder, f'{mzml_file}_{file_worker}.csv'), 'w', buffering=1) as index_writer:
             index_writer.write(
                 'Spec Index,Annotated Sequence,Charge,m/z,MS1 Peak Number,MS2 Peak Number,MSGP File Name,MSGP Datablock Pointer,MSGP Datablock Length\n')
 
@@ -48,7 +55,7 @@ def main(worker, total_worker, input_mzml_folder, input_feature_file, input_whol
                     writer.close()
                     file_size = 0
                     file_num += 1
-                    writer = open(os.path.join(output_folder, f'{mzml_file}_{file_num}.msgp'), 'wb')
+                    writer = open(os.path.join(output_folder, f'{mzml_file}_{file_worker}_{file_num}.msgp'), 'wb')
 
                 seq = peptide['mod_sequence']
                 seq = seq.replace(' ', '')
@@ -81,7 +88,7 @@ def main(worker, total_worker, input_mzml_folder, input_feature_file, input_whol
 
                 index_writer.write(
                     '{},{},{},{},{},{},{},{},{}\n'.format(spec_index, seq, charge, peptide["precursor_mz"],
-                                                          ms1_num, ms2_num, "{}_{}.msgp".format(mzml_file, file_num),
+                                                          ms1_num, ms2_num, "{}_{}_{}.msgp".format(mzml_file, file_worker, file_num),
                                                           writer.tell(),
                                                           len(compressed_data)))
 
@@ -92,5 +99,5 @@ def main(worker, total_worker, input_mzml_folder, input_feature_file, input_whol
 
 
 if __name__=='__main__':
-    worker, total_worker, input_mzml_folder, input_feature_file, input_whole_feature_file, output_folder = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6]
-    main(worker, total_worker, input_mzml_folder, input_feature_file, input_whole_feature_file, output_folder)
+    worker, file_worker, total_worker, tot_file_worker, input_mzml_folder, input_feature_file, input_whole_feature_file, output_folder = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8]
+    main(worker, file_worker, total_worker, tot_file_worker, input_mzml_folder, input_feature_file, input_whole_feature_file, output_folder)

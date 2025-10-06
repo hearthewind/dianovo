@@ -4,11 +4,9 @@ import numpy as np
 import pandas as pd
 
 import sys
+
 sys.path.append('../../')
-
 from utils.data.processing_utils import find_best_scan_index, bin_one_spectrum, feature_gen
-
-
 from utils.data.configs import mz_max, num_bins
 from utils.data.peptide import get_ms1_from_precursor, get_ms2_from_precursor, filter_ms1_precursor_window
 
@@ -37,10 +35,13 @@ def create_interpolated_ms1(peptide: dict, ms1_df: pd.DataFrame, ms2_df: pd.Data
         if any(intensities > 0):
 
             if neighboring:
-                if 1 <= i:
-                    intensities = binned_spectra[:, i] + binned_spectra[:, i - 1]
-                if i <= num_bins - 2:
-                    intensities = binned_spectra[:, i] + binned_spectra[:, i + 1]
+                try:
+                    intensities = binned_spectra[:, i] + binned_spectra[:, i - 1] + binned_spectra[:, i + 1]
+                except IndexError:
+                    try:
+                        intensities = binned_spectra[:, i] + binned_spectra[:, i - 1]
+                    except IndexError:
+                        intensities = binned_spectra[:, i] + binned_spectra[:, i + 1]
             else:
                 intensities = binned_spectra[:, i]
 
@@ -94,16 +95,15 @@ def create_interpolated_ms1(peptide: dict, ms1_df: pd.DataFrame, ms2_df: pd.Data
     for i, (mz, _) in enumerate(interp_ms1):
         xgram = np.array(selected_xgrams[i])
 
-        if np.any(xgram > 0):
-            feature_vectors = []
-            for j in range(scan_size):
-                feature_dict = selected_feature_dicts[j]
-                feature_vec = get_feature(mz, feature_dict)
-                feature_vectors.append(feature_vec)
+        feature_vectors = []
+        for j in range(scan_size):
+            feature_dict = selected_feature_dicts[j]
+            feature_vec = get_feature(mz, feature_dict)
+            feature_vectors.append(feature_vec)
 
-            feature_vectors = np.array(feature_vectors)
+        feature_vectors = np.array(feature_vectors)
 
-            ret.append((mz, xgram, feature_vectors))
+        ret.append((mz, xgram, feature_vectors))
 
     ms1_mzs = np.array([x[0] for x in ret])
     ms1_xgrams = np.array([x[1] for x in ret])

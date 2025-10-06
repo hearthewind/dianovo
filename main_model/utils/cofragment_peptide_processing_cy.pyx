@@ -7,6 +7,7 @@ cimport cython
 
 from utils.data.BasicClass import Residual_seq
 from utils.data.theo_peak_information import get_theoretical_peaks
+from utils.cofragment_constants import mass_threshold
 
 ion_types = ['1a','1b','2a','2b','1a-NH3','1a-H2O','1b-NH3','1b-H2O'] + ['1y','1y-NH3','1y-H2O','2y'] # total 12 ions
 
@@ -27,11 +28,11 @@ def label_ms2_one_peptide(dict peptide, cnp.ndarray[double, ndim=1] ms2_mzs):
         double mz
         str ion
         int location, i, num_fragments, fragment_idx, num_mzs
-        double mass_threshold = 0.26  # Threshold for matching
         list chosen_ion_types
         cnp.ndarray[int, ndim=1] ret
         bint fragment
         int noise_index = label_dict['noise']  # Precompute index for 'noise'
+        double mass_threshold_c  # C variable for mass threshold
 
     # Store length before nogil block (avoiding calling len() inside prange)
     num_mzs = ms2_mzs.shape[0]
@@ -63,11 +64,14 @@ def label_ms2_one_peptide(dict peptide, cnp.ndarray[double, ndim=1] ms2_mzs):
     # Allocate memory for the result array
     ret = np.empty(num_mzs, dtype=np.int32)
 
+    # Copy Python mass_threshold to C double before nogil block
+    mass_threshold_c = mass_threshold
+
     # Assign labels efficiently using parallelization
     for i in prange(num_mzs, nogil=True):  # Using precomputed num_mzs
         fragment = False
         for fragment_idx in range(num_fragments):
-            if fabs(ms2_mzs[i] - theo_mz_values[fragment_idx]) <= mass_threshold:
+            if fabs(ms2_mzs[i] - theo_mz_values[fragment_idx]) <= mass_threshold_c:
                 ret[i] = ion_indices[fragment_idx]
                 fragment = True
                 break

@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 import pymzml
 from tqdm import tqdm
@@ -8,10 +9,11 @@ from tqdm import tqdm
 def get_mzml_list(mzml_folder: str):
     mzml_list = [file_name for file_name in os.listdir(mzml_folder) if file_name.endswith('mzML')]
     mzml_list = [file_name.strip('.mzML') for file_name in mzml_list]
+    # mzml_list = sorted(mzml_list) #TODO do this to ensure reproducibility
     return mzml_list
 
 
-def read_one_mzml(mzml_path, ion_mobility=False):
+def read_one_mzml(mzml_path, timstof=False):
     ms1_df = {}
     ms2_df = {}
 
@@ -23,28 +25,28 @@ def read_one_mzml(mzml_path, ion_mobility=False):
             ms1_df[mzml_file + ':' + str(spectrum.index)] = {
                 'idx': spectrum.index,
                 'run': mzml_file,
-                'intensity': spectrum.i,
-                'mz': spectrum.mz,
+                'intensity': np.array(spectrum.i, dtype=np.float32),
+                'mz': np.array(spectrum.mz,dtype=np.float32),
                 'rt': spectrum.scan_time_in_minutes(),
             }
 
-            if ion_mobility:
-                ms1_df[mzml_file + ':' + str(spectrum.index)]['ion_mobility'] = spectrum.get_tims_tof_ion_mobility()
+            if timstof:
+                ms1_df[mzml_file + ':' + str(spectrum.index)]['ion_mobility'] = np.array(spectrum.get_tims_tof_ion_mobility(), dtype=np.float32)
 
         if spectrum.ms_level == 2:
             ms2_df[mzml_file + ':' + str(spectrum.index)] = {
                 'idx': spectrum.index,
                 'run': mzml_file,
-                'intensity': spectrum.i,
-                'mz': spectrum.mz,
+                'intensity': np.array(spectrum.i, dtype=np.float32),
+                'mz': np.array(spectrum.mz, dtype=np.float32),
                 'rt': spectrum.scan_time_in_minutes(),
                 'precursor_mz_target': spectrum["MS:1000827"],
                 'precursor_mz_lower': spectrum["MS:1000827"] - spectrum["MS:1000828"],
                 'precursor_mz_upper': spectrum["MS:1000827"] + spectrum["MS:1000829"]
             }
 
-            if ion_mobility:
-                ms2_df[mzml_file + ':' + str(spectrum.index)]['ion_mobility'] = spectrum.get_tims_tof_ion_mobility()
+            if timstof:
+                ms2_df[mzml_file + ':' + str(spectrum.index)]['ion_mobility'] = np.array(spectrum.get_tims_tof_ion_mobility(), dtype=np.float32)
 
     ms1_df = pd.DataFrame.from_dict(ms1_df, orient='index')
     ms2_df = pd.DataFrame.from_dict(ms2_df, orient='index')

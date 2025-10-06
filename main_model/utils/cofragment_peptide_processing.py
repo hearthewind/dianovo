@@ -3,10 +3,7 @@ import pandas as pd
 
 from utils.data.peptide import get_ms2_from_precursor
 from utils.cofragment_peptide_processing_cy import label_ms2_one_peptide, label_dict
-
-
-
-mass_threshold = 0.01
+from utils.cofragment_constants import mass_threshold
 
 
 def is_overlap(start1, end1, start2, end2):

@@ -8,12 +8,13 @@ Assumes that the input m/z array is 1D and sorted in increasing order.
 import numpy as np
 cimport numpy as np
 from libc.math cimport exp, tanh
+from utils.data.configs import mz_max
 
 cdef class PeakFeatureGeneration:
     cdef int local_sliding_window
     cdef double data_acquisition_upper_limit
 
-    def __init__(self, int local_sliding_window=50, double data_acquisition_upper_limit=1000.0):
+    def __init__(self, int local_sliding_window=50, double data_acquisition_upper_limit=mz_max):
         """
         Parameters:
           local_sliding_window: the half-window size in m/z units for local feature computation.
