@@ -3,6 +3,7 @@ import os
 import pickle
 import traceback
 
+import numpy as np
 from omegaconf import DictConfig
 from tqdm import tqdm
 
@@ -22,7 +23,7 @@ def main(worker, file_worker, total_worker, total_file_worker, input_mzml_folder
     print('Dividing feature by mzml')
     mzml_list = get_mzml_list(input_mzml_folder)
     assert 1 <= worker <= total_worker
-    mzml_per_worker = int(len(mzml_list) / total_worker)
+    mzml_per_worker = int(np.ceil(len(mzml_list) / total_worker))
     start_mzml, end_mzml = mzml_per_worker * (worker - 1), mzml_per_worker * worker
     if worker == total_worker:
         end_mzml = len(mzml_list)
