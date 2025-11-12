@@ -4,4 +4,4 @@ gnova_file_name=GNova-Astral_pretrain \
 wandb.project=RGNova-Astral wandb.name=op \
 infer.optimal_path_file=prediction/optimal_path/386on453.csv \
 infer.dataset_dir=/home/m/data/Dropbox/shared/dianovo_data/denovo_data_46386/ \
-infer.test_spec_header_filename=02052023_Yeast_KO_3Th_2p5ms_KO1_rep01_20230503212731_2.csv
+infer.test_spec_header_filename=denovo_46386.csv

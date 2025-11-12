@@ -7,4 +7,4 @@ wandb.project=RGNova-Astral wandb.name=sg \
 infer.optimal_path_file=prediction/optimal_path/386on453.csv \
 infer.output_file=prediction/sequence_generation/386on453.csv \
 infer.dataset_dir=/home/m/data/Dropbox/shared/dianovo_data/processed_data_46386/ \
-infer.test_spec_header_filename=46386.csv
+infer.test_spec_header_filename=processed_46386.csv
